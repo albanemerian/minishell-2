@@ -47,7 +47,7 @@ Usage :  make
 | Separator                       | 100%       | 5/5   | x     |
 | Simple pipe                     | 100%       | 4/4   | x     |
 | Simple redirections             | 100%       | 2/2   | x     |
-| Advenced pipe                   | 100%       | 6/7   | x     |
+| Advenced pipe                   | 85.7%       | 6/7   | x     |
 | Advenced manipulations          | 50%        | 2/4   | x     |
 | End scores                      | 95.7%      | 67/70 | x     |
 
