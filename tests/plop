@@ -1,0 +1,12 @@
+[51]
+NAME="double left redirections && comas"
+SETUP="export TERM=xterm ; PATH='/bin:/usr/bin'"
+CLEAN=""
+TESTS=
+  echo "ls -l << caca ; cat tests"  
+  echo "ls"
+  echo "ttata"
+  echo "fun"
+  echo "caca"
+
+[51-END]
