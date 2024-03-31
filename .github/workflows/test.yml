@@ -1,0 +1,118 @@
+##
+## EPITECH PROJECT, 2023
+## chocoatine
+## File description:
+## dev-ops-2
+##
+
+name: test
+
+on:
+  push:
+    branches-ignore:
+      ga-ignore-*
+  pull_request:
+    branches-ignore:
+      ga-ignore-*
+
+env:
+  EXECUTABLES: "mysh"
+  LIBS: "libmy.a"
+  AUTHORIZE:  malloc, free, exit, opendir, readdir, closedir, getcwd, chdir, fork, stat,
+              lstat, fstat, open, close, getline, strtok, strtok_r, read, write, execve, access, isatty, wait, waitpid,
+              wait3, wait4, signal, kill, getpid, strerror, perror, strsignal, pipe, dup, dup2
+
+jobs:
+  check_coding_style:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/epitech/coding-style-checker:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run coding style checker
+        run: check.sh $(pwd) $(pwd)
+        
+      - name: Check coding style errors
+        run: |
+          if [ -s "coding-style-reports.log" ]; then
+            while IFS= read -r line; do
+              file=$(echo "$line" | cut -d":" -f1)
+              line_number=$(echo "$line" | cut -d":" -f2)
+              error_message=$(echo "$line" | cut -d":" -f3-)
+              echo "::error file=$file,line=$line_number::${error_message}"
+            done < coding-style-reports.log
+            exit 1
+          else
+            echo "No coding style errors found."
+          fi
+  check_program_compilation:
+    runs-on: ubuntu-latest
+    needs: check_coding_style
+    container:
+      image:  epitechcontent/epitest-docker:latest
+
+    steps:
+      - name: Compile
+        uses: actions/checkout@v4
+
+      - name: Run compile test
+        run: |
+          make
+        timeout-minutes: 2
+
+      - name: Check if lib exist
+        run: |
+          for lib in $(echo "${{ env.LIBS }}" | tr ',' ' '); do
+            if [ ! -e "$lib" ]; then
+              echo "Error: $lib is not present"
+              exit 1
+            fi
+          done
+      - name: Clean up repositorie
+        run: make clean
+
+      - name: Verify executables exists
+        run: |
+          for executable in $(echo "${{ env.EXECUTABLES }}" | tr ',' ' '); do
+            if [ ! -x "$executable" ]; then
+              echo "Error: $executable is either not present or not executable"
+              exit 1
+            fi
+          done
+
+  check_banned_function:
+    runs-on: ubuntu-latest
+    needs: check_program_compilation
+    container:
+      image:  epitechcontent/epitest-docker:latest
+
+    steps:
+      - name: Compile
+        uses: actions/checkout@v4
+
+      - name: Run compile test
+        run: |
+          make
+        timeout-minutes: 2
+
+      - name: Check for banned functions
+        run: |
+          IFS=', ' read -r -a AUTHORIZED_FUNCTIONS <<< "${{ env.AUTHORIZE }}"
+          UNDEFINED_SYMBOLS=$(nm "${{ env.EXECUTABLES }}" | grep ' U ' | sed 's/^.* U \([^@]*\).*/\1/'| grep -v '^__libc_' |  grep -v '^__errno_')
+          for SYMBOL in $UNDEFINED_SYMBOLS; do
+              authorized=false
+              for AUTH_FUNC in "${AUTHORIZED_FUNCTIONS[@]}"; do
+                  echo "$AUTH_FUNC---$SYMBOL"
+                  if [[ "$SYMBOL" == "$AUTH_FUNC" ]]; then
+                      authorized=true
+                      break
+                  fi
+              done
+              if [[ $authorized == false ]]; then
+                  echo "Error: Unauthorized function used: $SYMBOL"
+                  exit 1
+              fi
+          done
+          echo "All undefined symbols are authorized functions."
