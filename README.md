@@ -51,5 +51,5 @@ Usage :  make
 | Advenced manipulations          | 50%        | 2/4   | x     |
 | End scores                      | 95.7%      | 67/70 | x     |
 
-
+Grade A
 Beware of -42 Epitech students !!!
